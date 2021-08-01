@@ -1,5 +1,6 @@
 import speech_recognition as sr
-import pyttsx3, pywhatkit, wikipedia, datetime, keyboard
+import subprocess as sub
+import pyttsx3, pywhatkit, wikipedia, datetime, keyboard, os
 from pygame import mixer
 
 #VARIABLES
@@ -13,6 +14,18 @@ engine = pyttsx3.init()
 voices = engine.getProperty('voices')
 #elegir idioma del asistente
 engine.setProperty('voices',voices[0].id)
+engine.setProperty('rate',145)
+
+#diccionario
+sites ={
+    'google':'google.com',
+    'youtube':'youtube.com',
+    'facebook':'facebook.com',
+    'whatsapp':'web.whatsapp.com'
+}
+files={
+    'documento':'Modelo.jpg'
+}
 
 #funcion para que la computadora hable
 def talk(text):
@@ -65,6 +78,41 @@ def run():
                     if keyboard.read_key() == "s":
                         mixer.music.stop()
                         break
+        
+        #condicional para reconocer "abre"
+        elif 'abre' in rec:
+            for site in sites:
+                if site in rec:
+                    sub.call(f'start chrome.exe {sites[site]}', shell = True)
+                    talk(f'Abriendo {site}')
+        #condicional para reconocer "archivo"
+        elif 'archivo' in rec:
+            for file in files:
+                if file in rec:
+                    sub.Popen([files[file]], shell = True)
+                    talk(f'Abriendo{file}')
+        #condicional para reconocer "escribe", 
+        elif 'escribe' in rec:
+            try:
+                with open("nota.txt", 'a') as f:
+                    write(f)
+            except FileExistsError as e:
+                file = open("nota.txt", 'w')
+                write(file)
+
+        #condicional para reconocer "terminar"
+        elif 'gracias' in rec:
+            talk('De nada!')
+            break
+
+def write(f):
+    talk("Díctame lo que debo escribir")
+    rec_write = listen()
+    f.write(rec_write + os.linesep)
+    f.close()
+    talk("Listo, puedes revisarlo")
+    sub.Popen("nota.txt", shell = True)
+
 
 if __name__ == '__main__':
     run()
