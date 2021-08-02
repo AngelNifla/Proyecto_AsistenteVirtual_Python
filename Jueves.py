@@ -41,7 +41,8 @@ sites ={
     'whatsapp':'web.whatsapp.com'
 }
 files={
-    'documento':'Modelo.jpg'
+    'documento':'E:\PYTHON DATE\PROYECTO-FINAL-AR\Modelo.jpg',
+    'informe':'E:\PYTHON DATE\PROYECTO-FINAL-AR\Informe.pdf'
 }
 programas ={
     'telegram':"D:\Telegram Desktop\Telegram.exe",
@@ -57,7 +58,7 @@ def talk(text):
 def listen():
     try:
         with sr.Microphone() as source:   #toma como fuente el microfono 
-            #print("escuchando...")
+            print("escuchando...")
             talk("Te escucho!")
             pc = listener.listen(source)    #escucha lo que decimos
             rec = listener.recognize_google(pc, language="es")     #convierte nuestra voz y la convierte a texto
@@ -68,6 +69,62 @@ def listen():
         pass
     return rec      #retorna lo recocnocido
 
+
+#funcion para reproducir
+def reproduce(rec):
+    music = rec.replace('reproduce','')
+    print("Reproduciendo"+ music)
+    talk("Reproduciendo"+ music)
+    pywhatkit.playonyt(music)
+
+#funcion para buscar
+def busca(rec):
+    search = rec.replace('busca','')
+    wikipedia.set_lang("es")        #la informacion se buscara en español
+    wiki = wikipedia.summary(search, 1)     #resume la informacion en una oración
+    print(search+ ": " +wiki)
+    talk(wiki)
+
+#funcion para detectar colores
+def color(rec):
+    talk("Enseguida")
+    t = tr.Thread(target=cam.capture)
+    t.start()
+
+#funcion para la alarma
+def alarma(rec):
+    t = tr.Thread(target=clock, args=(rec,))
+    t.start()
+
+#funcion para abrir una pagina
+def abre(rec):
+    for site in sites:
+        if site in rec:
+            sub.call(f'start chrome.exe {sites[site]}', shell = True)
+            talk(f'Abriendo {site}')
+    for app in programas:
+        if app in rec:
+            talk(f'Abriendo {app}')
+            sub.Popen(programas[app])
+
+#funcion para abrir un archivo
+def archivo(rec):
+    for file in files:
+        if file in rec:
+            sub.Popen([files[file]], shell = True)
+            talk(f'Abriendo{file}')
+
+#funcion para escribir
+def escribe(rec):
+    try:
+        with open("nota.txt", 'a') as f:
+            write(f)
+    except FileExistsError as e:
+        file = open("nota.txt", 'w')
+        write(file)
+
+
+
 #funcion principal
 def clock(rec):
     alam = rec.replace('alarma','')
@@ -76,8 +133,9 @@ def clock(rec):
     while True:
         if datetime.datetime.now().strftime('%H:%M') == alam:
             print("DESPIERTA!!!")
+            file = "E:\PYTHON DATE\PROYECTO-FINAL-AR\Alam.mp3"
             mixer.init()
-            mixer.music.load("alam.mp3")
+            mixer.music.load(file)
             mixer.music.play()
         else:
             continue
@@ -85,62 +143,28 @@ def clock(rec):
             mixer.music.stop()
             break
 
+#diccionario principal
+key_words = {
+    'reproduce': reproduce,
+    'busca': busca,
+    'alarma': alarma,
+    'color': color,
+    'abre': abre,
+    'archivo': archivo,
+    'escribe': escribe
+}
 #funcion principal
 def run():
     while True:
         rec = listen()
-        #condicional para reconocer "reproduce"
-        if 'reproduce' in rec:
-            music = rec.replace('reproduce','')
-            print("Reproduciendo"+ music)
-            talk("Reproduciendo"+ music)
-            pywhatkit.playonyt(music)
-        #condicional para reconocer "busca"
-        elif 'busca' in rec:
-            search = rec.replace('busca','')
-            wikipedia.set_lang("es")        #la informacion se buscara en español
-            wiki = wikipedia.summary(search, 1)     #resume la informacion en una oración
-            print(search+ ": " +wiki)
-            talk(wiki)
-        #condicional para reconocer "camara"
-        elif 'colores' in rec:
-            talk("Enseguida")
-            t = tr.Thread(target=cam.capture)
-            t.start()
-
-        #condicional para reconocer "alarma"
-        elif 'alarma' in rec:
-            t = tr.Thread(target=clock, args=(rec,))
-            t.start()
-        
-        #condicional para reconocer "abre"
-        elif 'abre' in rec:
-            for site in sites:
-                if site in rec:
-                    sub.call(f'start chrome.exe {sites[site]}', shell = True)
-                    talk(f'Abriendo {site}')
-            for app in programas:
-                if app in rec:
-                    talk(f'Abriendo {app}')
-                    sub.Popen(programas[app])
-        #condicional para reconocer "archivo"
-        elif 'archivo' in rec:
-            for file in files:
-                if file in rec:
-                    sub.Popen([files[file]], shell = True)
-                    talk(f'Abriendo{file}')
-        #condicional para reconocer "escribe", 
-        elif 'escribe' in rec:
-            try:
-                with open("nota.txt", 'a') as f:
-                    write(f)
-            except FileExistsError as e:
-                file = open("nota.txt", 'w')
-                write(file)
-
-        #condicional para reconocer "terminar"
-        elif 'gracias' in rec:
-            talk('De nada!')
+        if 'busca' in rec:
+            key_words['busca'](rec)
+        else:
+            for word in key_words:
+                if word in rec:
+                    key_words[word](rec)
+        if 'gracias' in rec:
+            talk("de nada!")
             break
 
 def write(f):
