@@ -56,17 +56,18 @@ def talk(text):
 
 #funcion para que el asistente escuhe
 def listen():
+    listener = sr.Recognizer()
+    with sr.Microphone() as source:   #toma como fuente el microfono 
+        print("escuchando...")
+        talk("Te escucho!")
+        pc = listener.listen(source)    #escucha lo que decimos
     try:
-        with sr.Microphone() as source:   #toma como fuente el microfono 
-            print("escuchando...")
-            talk("Te escucho!")
-            pc = listener.listen(source)    #escucha lo que decimos
-            rec = listener.recognize_google(pc, language="es")     #convierte nuestra voz y la convierte a texto
-            rec = rec.lower()       #convierte el texto en minusculas
-            if name in rec:         
-                rec = rec.replace(name,'')
-    except:
-        pass
+        rec = listener.recognize_google(pc, language="es")     #convierte nuestra voz y la convierte a texto
+        rec = rec.lower()       #convierte el texto en minusculas
+        if name in rec:         
+            rec = rec.replace(name,'')
+    except sr.UnknownValueError:
+        print("No entendi, intenta de nuevo")
     return rec      #retorna lo recocnocido
 
 
@@ -156,7 +157,11 @@ key_words = {
 #funcion principal
 def run():
     while True:
-        rec = listen()
+        try:
+            rec = listen()
+        except UnboundLocalError:
+            talk("No escuche bien, te escucho de nuevo")
+            continue
         if 'busca' in rec:
             key_words['busca'](rec)
         else:
@@ -166,6 +171,8 @@ def run():
         if 'gracias' in rec:
             talk("de nada!")
             break
+
+    main_window.update()
 
 def write(f):
     talk("Díctame lo que debo escribir")
