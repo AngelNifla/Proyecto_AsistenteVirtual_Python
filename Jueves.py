@@ -6,6 +6,7 @@ from tkinter import *
 from PIL import Image, ImageTk
 from pygame import mixer
 import threading as tr
+import cam
 
 #VARIABLES
 
@@ -101,6 +102,12 @@ def run():
             wiki = wikipedia.summary(search, 1)     #resume la informacion en una oración
             print(search+ ": " +wiki)
             talk(wiki)
+        #condicional para reconocer "camara"
+        elif 'colores' in rec:
+            talk("Enseguida")
+            t = tr.Thread(target=cam.capture)
+            t.start()
+
         #condicional para reconocer "alarma"
         elif 'alarma' in rec:
             t = tr.Thread(target=clock, args=(rec,))
